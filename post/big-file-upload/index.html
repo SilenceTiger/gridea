@@ -1,0 +1,347 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>大文件上传记录 | Silence Tiger</title>
+<link rel="shortcut icon" href="https://silencetiger.github.io/gridea/favicon.ico?v=1654580269588">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://silencetiger.github.io/gridea/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="大文件上传记录 | Silence Tiger - Atom Feed" href="https://silencetiger.github.io/gridea/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="1.定义基本参数
+export const CHUNK_SIZE = 1024 * 1024 * 10 // 10M
+export const LOADED_BUFFER_SIZE = 10 // 计算速度buffer size
+expor..." />
+    <meta name="keywords" content="javascript,前端小技巧" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.5.1/build/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://silencetiger.github.io/gridea">
+  <img class="avatar" src="https://silencetiger.github.io/gridea/images/avatar.png?v=1654580269588" alt="">
+  </a>
+  <h1 class="site-title">
+    Silence Tiger
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/gridea/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/gridea/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              大文件上传记录
+            </h2>
+            <div class="post-info">
+              <span>
+                2022-05-27
+              </span>
+              <span>
+                4 min read
+              </span>
+              
+                <a href="https://silencetiger.github.io/gridea/tag/_-OHARBtQ/" class="post-tag">
+                  # javascript
+                </a>
+              
+                <a href="https://silencetiger.github.io/gridea/tag/pJ3AIhAm9/" class="post-tag">
+                  # 前端小技巧
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content" v-pre>
+                <h2 id="1定义基本参数">1.定义基本参数</h2>
+<pre><code>export const CHUNK_SIZE = 1024 * 1024 * 10 // 10M
+export const LOADED_BUFFER_SIZE = 10 // 计算速度buffer size
+export const UPLOADING_SIZE = 3 // 同时上传的文件数量
+export const CHUNK_FAIL_SIZE = 5 // 每一个文件允许失败的次数
+
+export enum UPLOAD_STATUS {
+  INIT = 1, // 初始化
+  CAL_HASH = 2, // 计算hash中
+  FINISH_HASH = 3, // 计算hash完成
+  UPLOADING = 4, // 上传中
+  FAIL_UPLOAD = 5, // 上传失败 计算Hash失败
+  FINISH_UPLOAD = 6, // 上传完成
+  REPEAT = 7, //重复
+  PROCESSING = 8, // 处理中
+  FAIL_PROCESS = 9, // 处理失败
+  FINISH_PROCESS = 10, // 处理完成
+}
+</code></pre>
+<h2 id="2定义文件类">2.定义文件类</h2>
+<pre><code>export class FileUpload {
+  loadedBuffer?: any[]
+  startIndex?: number
+  totalIndex?: number
+  totalSize?: number
+  curIndex?: number
+  speed?: string
+  process?: number
+  md5?: string
+  status?: number
+  hashProcess?: number
+  file: any
+  fileName: string
+  failCount?: number
+  updateHashTime?: number
+  image_md5?: string
+  image_name?: string
+  constructor(options?: FileUpload) {
+    this.loadedBuffer = options?.loadedBuffer || []
+    this.startIndex = options?.startIndex || 0
+    this.totalIndex = options?.totalIndex || 0
+    this.totalSize = options?.totalSize || 0
+    this.curIndex = options?.curIndex || 0
+    this.speed = options?.speed || ''
+    this.process = options?.process || 0
+    this.md5 = options?.md5 || ''
+    this.fileName = options?.fileName || ''
+    this.file = options?.file || null
+    this.status = options?.status || UPLOAD_STATUS.INIT
+    this.hashProcess = options?.hashProcess || 0
+    this.failCount = 0
+  }
+}
+</code></pre>
+<h2 id="3切割文件生成chunklist">3.切割文件生成chunkList</h2>
+<pre><code>export const createFileChunk = (file: any, size: number = CHUNK_SIZE) =&gt; {
+  const fileChunkList = []
+  let cur = 0
+  while (cur &lt; file.size) {
+    fileChunkList.push({ file: file.slice(cur, cur + size) })
+    cur += size
+  }
+  return fileChunkList
+}
+</code></pre>
+<h2 id="4获取文件头部数据">4.获取文件头部数据</h2>
+<pre><code>export const getFileHeader = (file: any, size=1024 * 1024) =&gt; {
+  return { file: file.slice(0, size) }
+}
+</code></pre>
+<h2 id="5计算文件hash">5.计算文件hash</h2>
+<pre><code>// 生成文件 hash（web-worker）
+export const calculateHash = (fileChunkList: any, fu: FileUpload, dom: any) =&gt; {
+  fu.status = UPLOAD_STATUS.CAL_HASH
+  fu.updateHashTime = new Date().getTime()
+  return new Promise((resolve, reject) =&gt; {
+    let worker = new Worker('js/isoWorker.js')
+    let timer = setInterval(() =&gt; {
+      // 10秒钟未更新hash进度 抛出错误
+      const curTime = new Date().getTime()
+      if (curTime - fu.updateHashTime &gt; 10000 &amp;&amp; fu.status !== UPLOAD_STATUS.FINISH_HASH) {
+        reject()
+        clearInterval(timer)
+        timer = null
+      }
+    }, 10000)
+    worker.postMessage({ fileChunkList })
+    worker.onmessage = e =&gt; {
+      const { hash, percentage } = e.data
+      dom.click() // trigger event
+      fu.hashProcess = percentage
+      fu.updateHashTime = new Date().getTime()
+      if (hash) {
+        fu.status = UPLOAD_STATUS.FINISH_HASH
+        clearInterval(timer)
+        timer = null
+        resolve({
+          hash,
+          fu,
+        })
+      }
+    }
+  })
+}
+// js/isoWorder.js
+self.importScripts(&quot;./spark-md5.min.js&quot;); // 导入脚本
+
+// 生成文件 hash
+self.onmessage = e =&gt; {
+  const { fileChunkList } = e.data;
+  const spark = new self.SparkMD5.ArrayBuffer();
+  let percentage = 0;
+  let count = 0;
+  const loadNext = index =&gt; {
+    const reader = new FileReader();
+    reader.readAsArrayBuffer(fileChunkList[index].file);
+    reader.onload = e =&gt; {
+      count++;
+      spark.append(e.target.result);
+      if (count === fileChunkList.length) {
+        self.postMessage({
+          percentage: 100,
+          hash: spark.end()
+        });
+        self.close();
+      } else {
+        percentage += 100 / fileChunkList.length;
+        self.postMessage({
+          percentage
+        });
+        // 递归计算下一个切片
+        loadNext(count);
+      }
+    };
+  };
+  loadNext(0);
+};
+
+</code></pre>
+<h2 id="6计算速度与进度">6.计算速度与进度</h2>
+<pre><code>    const config = {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 1000 * 60 * 2, // 2min
+      onUploadProgress: (p: any) =&gt; {
+        const { loaded } = p // loaded total
+        const curTime = new Date().getTime()
+        // console.log(fu.fileName)
+        const historyUploadSize = fu.curIndex * CHUNK_SIZE + loaded // 历史已上传文件大小
+        const uploadedSize = (fu.curIndex - fu.startIndex) * CHUNK_SIZE + loaded // 本次已上传文件大小
+        if (fu.loadedBuffer.length &gt;= LOADED_BUFFER_SIZE) {
+          fu.loadedBuffer.splice(0, 1)
+        }
+        fu.loadedBuffer.push({
+          time: curTime,
+          loaded: uploadedSize,
+        })
+        const blockSize = fu.loadedBuffer[fu.loadedBuffer.length - 1].loaded - fu.loadedBuffer[0].loaded
+        const blockTime = fu.loadedBuffer[fu.loadedBuffer.length - 1].time - fu.loadedBuffer[0].time
+
+        fu.speed = calculateNetworkSpeed(blockSize, blockTime)
+        fu.process = (100 * historyUploadSize) / fu.totalSize
+      },
+    }
+</code></pre>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#1%E5%AE%9A%E4%B9%89%E5%9F%BA%E6%9C%AC%E5%8F%82%E6%95%B0">1.定义基本参数</a></li>
+<li><a href="#2%E5%AE%9A%E4%B9%89%E6%96%87%E4%BB%B6%E7%B1%BB">2.定义文件类</a></li>
+<li><a href="#3%E5%88%87%E5%89%B2%E6%96%87%E4%BB%B6%E7%94%9F%E6%88%90chunklist">3.切割文件生成chunkList</a></li>
+<li><a href="#4%E8%8E%B7%E5%8F%96%E6%96%87%E4%BB%B6%E5%A4%B4%E9%83%A8%E6%95%B0%E6%8D%AE">4.获取文件头部数据</a></li>
+<li><a href="#5%E8%AE%A1%E7%AE%97%E6%96%87%E4%BB%B6hash">5.计算文件hash</a></li>
+<li><a href="#6%E8%AE%A1%E7%AE%97%E9%80%9F%E5%BA%A6%E4%B8%8E%E8%BF%9B%E5%BA%A6">6.计算速度与进度</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://silencetiger.github.io/gridea/post/pan-duan-liang-ge-ju-xing-shi-fou-xiang-jiao-ji-xiang-guan/">
+              <h3 class="post-title">
+                判断两个矩形是否相交及相关
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://silencetiger.github.io/gridea/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>

@@ -1,0 +1,233 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>判断两个矩形是否相交及相关 | Silence Tiger</title>
+<link rel="shortcut icon" href="https://silencetiger.github.io/gridea/favicon.ico?v=1654580269588">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://silencetiger.github.io/gridea/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="判断两个矩形是否相交及相关 | Silence Tiger - Atom Feed" href="https://silencetiger.github.io/gridea/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="矩形是否相交
+/**
+ *
+ * @param rect1 矩形1 {x, y, w, h}
+ * @param rect2 矩形2 {x, y, w, h}
+ * 判断两个矩形是否相交
+ * 规则: 若两个矩形相交, 则两个矩形中心点的距..." />
+    <meta name="keywords" content="javascript,前端小技巧" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.5.1/build/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://silencetiger.github.io/gridea">
+  <img class="avatar" src="https://silencetiger.github.io/gridea/images/avatar.png?v=1654580269588" alt="">
+  </a>
+  <h1 class="site-title">
+    Silence Tiger
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/gridea/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/gridea/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              判断两个矩形是否相交及相关
+            </h2>
+            <div class="post-info">
+              <span>
+                2022-05-27
+              </span>
+              <span>
+                2 min read
+              </span>
+              
+                <a href="https://silencetiger.github.io/gridea/tag/_-OHARBtQ/" class="post-tag">
+                  # javascript
+                </a>
+              
+                <a href="https://silencetiger.github.io/gridea/tag/pJ3AIhAm9/" class="post-tag">
+                  # 前端小技巧
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content" v-pre>
+                <h2 id="矩形是否相交">矩形是否相交</h2>
+<pre><code>/**
+ *
+ * @param rect1 矩形1 {x, y, w, h}
+ * @param rect2 矩形2 {x, y, w, h}
+ * 判断两个矩形是否相交
+ * 规则: 若两个矩形相交, 则两个矩形中心点的距离小于两个矩形边长和的一半
+ */
+export function isRectIntersection(rect1, rect2) {
+  let center1 = {
+    x: (rect1.x + rect1.x + rect1.w) / 2,
+    y: (rect1.y + rect1.y + rect1.h) / 2,
+  }
+  let center2 = {
+    x: (rect2.x + rect2.x + rect2.w) / 2,
+    y: (rect2.y + rect2.y + rect2.h) / 2,
+  }
+  let dx = Math.abs(center1.x - center2.x)
+  let dy = Math.abs(center1.y - center2.y)
+  return dx &lt; (rect1.w + rect2.w) / 2 &amp;&amp; dy &lt; (rect1.h + rect2.h) / 2
+}
+</code></pre>
+<h2 id="判断两个dom元素是否相交">判断两个dom元素是否相交</h2>
+<pre><code>/**
+ *
+ * @param dom1
+ * @param dom2
+ * 判断两个dom是否相交
+ */
+export function isDomIntersection(dom1, dom2) {
+  if (!(dom1 &amp;&amp; dom2)) return false
+  const rect1 = getRectByDom(dom1)
+  const rect2 = getRectByDom(dom2)
+  return isRectIntersection(rect1, rect2)
+}
+
+export function getRectByDom(dom) {
+  return {
+    x: getNumInPx(dom.style.left),
+    y: getNumInPx(dom.style.top),
+    w: dom.clientWidth,
+    h: dom.clientHeight,
+  }
+}
+
+export function getNumInPx(str) {
+  if (str.includes('px')) {
+    return parseFloat(str.substring(0, str.length - 2))
+  } else {
+    return parseFloat(str || '0')
+  }
+}
+</code></pre>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E7%9F%A9%E5%BD%A2%E6%98%AF%E5%90%A6%E7%9B%B8%E4%BA%A4">矩形是否相交</a></li>
+<li><a href="#%E5%88%A4%E6%96%AD%E4%B8%A4%E4%B8%AAdom%E5%85%83%E7%B4%A0%E6%98%AF%E5%90%A6%E7%9B%B8%E4%BA%A4">判断两个dom元素是否相交</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://silencetiger.github.io/gridea/post/hooks-debounce/">
+              <h3 class="post-title">
+                React Hooks中使用debounce
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://silencetiger.github.io/gridea/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>

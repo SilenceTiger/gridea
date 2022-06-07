@@ -1,0 +1,421 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://silencetiger.github.io/gridea</id>
+    <title>Silence Tiger</title>
+    <updated>2022-06-07T05:37:55.021Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://silencetiger.github.io/gridea"/>
+    <link rel="self" href="https://silencetiger.github.io/gridea/atom.xml"/>
+    <subtitle>温故而知新</subtitle>
+    <logo>https://silencetiger.github.io/gridea/images/avatar.png</logo>
+    <icon>https://silencetiger.github.io/gridea/favicon.ico</icon>
+    <rights>All rights reserved 2022, Silence Tiger</rights>
+    <entry>
+        <title type="html"><![CDATA[夜揽月]]></title>
+        <id>https://silencetiger.github.io/gridea/post/ye-lan-yue/</id>
+        <link href="https://silencetiger.github.io/gridea/post/ye-lan-yue/">
+        </link>
+        <updated>2022-06-07T05:20:08.000Z</updated>
+        <content type="html"><![CDATA[<p>夜揽月，沉雾锁清池，醉里池中扁舟弄。</p>
+<p>青草小榭，楼台窗棂风。</p>
+<p>玉人舞流莹，碧光洒落澈水凝。</p>
+<p>星辰烁满空，闲人轻拨天微动。</p>
+<p>匆匆，抬望山东，日晓烟雨迷蒙。</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[江边独酌]]></title>
+        <id>https://silencetiger.github.io/gridea/post/jiang-bian-du-zhuo/</id>
+        <link href="https://silencetiger.github.io/gridea/post/jiang-bian-du-zhuo/">
+        </link>
+        <updated>2022-06-07T05:17:25.000Z</updated>
+        <content type="html"><![CDATA[<p>夕阳残，落西山，夜啼灯火暗。</p>
+<p>独倚江岸，碧波远帆，微风吹清晚。</p>
+<p>把酒明月看，姮娥怀兔婵娟端。</p>
+<p>佳人英雄伴，确是月下老人姻缘算。</p>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[拖拽常用方法]]></title>
+        <id>https://silencetiger.github.io/gridea/post/tuo-zhuai-chang-yong-fang-fa/</id>
+        <link href="https://silencetiger.github.io/gridea/post/tuo-zhuai-chang-yong-fang-fa/">
+        </link>
+        <updated>2022-05-27T02:22:41.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="当前元素相对容器元素的偏移">当前元素相对容器元素的偏移</h2>
+<pre><code>/**
+ *
+ * @param element 当前元素
+ * @param containerElement？ 容器元素 未填相对于body
+ *
+ * 返回 当前元素相对容器元素的偏移
+ * return {
+ * 		left: xx,
+ * 		top: xx
+ * }
+ */
+export const getOffset = (element, containerElement) =&gt; {
+  let position = {
+    left: 0,
+    top: 0,
+  }
+  if (typeof containerElement === 'string') {
+    containerElement = document.getElementById(containerElement)
+  }
+  containerElement = containerElement || document.body
+  while (element &amp;&amp; element !== containerElement) {
+    position.left += element.offsetLeft
+    position.top += element.offsetTop
+    element = element.offsetParent
+  }
+  return position
+}
+</code></pre>
+<h2 id="事件发生时-鼠标是否在容器中">事件发生时, 鼠标是否在容器中</h2>
+<pre><code>/**
+ *
+ * @param e 事件
+ * @param containerElement 容器元素 
+ *
+ * 返回 事件发生时, 鼠标是否在容器中
+ * return boolean
+ */
+export const isMouseInclude = (e, containerElement) =&gt; {
+  if (!containerElement) return
+  if (typeof containerElement === 'string') {
+    containerElement = document.querySelector(containerElement)
+  }
+  let offset = getOffset(containerElement)
+  let { pageX, pageY } = e
+  // pageX += scrollX
+  // pageY += scrollY
+  const { top: y1, left: x1 } = offset
+  const x2 = x1 + containerElement.offsetWidth
+  const y2 = y1 + containerElement.offsetHeight
+  return pageX &gt; x1 &amp;&amp; pageX &lt; x2 &amp;&amp; pageY &gt; y1 &amp;&amp; pageY &lt; y2
+}
+</code></pre>
+<h2 id="事件发生时-鼠标在容器内的坐标">事件发生时, 鼠标在容器内的坐标</h2>
+<pre><code>/**
+ *
+ * @param e 事件
+ * @param containerElement 容器元素
+ *
+ * 返回 事件发生时, 鼠标在容器内的坐标
+ * return {
+ * 		left: xx,
+ * 		top: xx
+ * }
+ */
+export const getPositionInContainer = (e, containerElement) =&gt; {
+  if (typeof containerElement === 'string') {
+    containerElement = document.querySelector(containerElement)
+  }
+  let offset = getOffset(containerElement)
+  let x = 'pageX',
+    y = 'pageY'
+  /**
+    是否考虑滚动条
+    x = 'clientX'
+    y = 'clientY'
+  */
+  return {
+    left: e[x] - offset.left,
+    top: e[y] - offset.top,
+  }
+}
+</code></pre>
+<h2 id="平移">平移</h2>
+<ul>
+<li>mouseDown记录鼠标相对于元素的相对位置<code>shiftX</code>、<code>shiftY</code></li>
+<li>mouseMove的时候通过<code>shiftX</code>、<code>shiftY</code>修正<code>left</code>、<code>top</code></li>
+</ul>
+<pre><code>  let moveTarget = {};
+  const mouseDown = (e) =&gt; {
+    if (!editing) return
+    let targetNode = e.currentTarget.parentNode
+    targetNode.style.zIndex = 999
+    moveTarget.dom = targetNode
+    moveTarget.shiftX = e.clientX - targetNode.getBoundingClientRect().left
+    moveTarget.shiftY = e.clientY - targetNode.getBoundingClientRect().top
+    e.stopPropagation()
+  }
+
+ const mouseMove = (e) =&gt; {
+     if (moveTarget.dom) {
+        const position = getPositionInContainer(e, '.container')
+        moveTarget.dom.style.left = `${position.left - moveTarget.shiftX}px`
+        moveTarget.dom.style.top = `${position.top - moveTarget.shiftY}px`
+     }
+ }
+
+ const mouseUp = (e) =&gt; {
+     if (moveTarget.dom) {
+         moveTarget = {}
+         // update react or vue 中的数据
+     }
+ }
+</code></pre>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[大文件上传记录]]></title>
+        <id>https://silencetiger.github.io/gridea/post/big-file-upload/</id>
+        <link href="https://silencetiger.github.io/gridea/post/big-file-upload/">
+        </link>
+        <updated>2022-05-27T02:14:21.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="1定义基本参数">1.定义基本参数</h2>
+<pre><code>export const CHUNK_SIZE = 1024 * 1024 * 10 // 10M
+export const LOADED_BUFFER_SIZE = 10 // 计算速度buffer size
+export const UPLOADING_SIZE = 3 // 同时上传的文件数量
+export const CHUNK_FAIL_SIZE = 5 // 每一个文件允许失败的次数
+
+export enum UPLOAD_STATUS {
+  INIT = 1, // 初始化
+  CAL_HASH = 2, // 计算hash中
+  FINISH_HASH = 3, // 计算hash完成
+  UPLOADING = 4, // 上传中
+  FAIL_UPLOAD = 5, // 上传失败 计算Hash失败
+  FINISH_UPLOAD = 6, // 上传完成
+  REPEAT = 7, //重复
+  PROCESSING = 8, // 处理中
+  FAIL_PROCESS = 9, // 处理失败
+  FINISH_PROCESS = 10, // 处理完成
+}
+</code></pre>
+<h2 id="2定义文件类">2.定义文件类</h2>
+<pre><code>export class FileUpload {
+  loadedBuffer?: any[]
+  startIndex?: number
+  totalIndex?: number
+  totalSize?: number
+  curIndex?: number
+  speed?: string
+  process?: number
+  md5?: string
+  status?: number
+  hashProcess?: number
+  file: any
+  fileName: string
+  failCount?: number
+  updateHashTime?: number
+  image_md5?: string
+  image_name?: string
+  constructor(options?: FileUpload) {
+    this.loadedBuffer = options?.loadedBuffer || []
+    this.startIndex = options?.startIndex || 0
+    this.totalIndex = options?.totalIndex || 0
+    this.totalSize = options?.totalSize || 0
+    this.curIndex = options?.curIndex || 0
+    this.speed = options?.speed || ''
+    this.process = options?.process || 0
+    this.md5 = options?.md5 || ''
+    this.fileName = options?.fileName || ''
+    this.file = options?.file || null
+    this.status = options?.status || UPLOAD_STATUS.INIT
+    this.hashProcess = options?.hashProcess || 0
+    this.failCount = 0
+  }
+}
+</code></pre>
+<h2 id="3切割文件生成chunklist">3.切割文件生成chunkList</h2>
+<pre><code>export const createFileChunk = (file: any, size: number = CHUNK_SIZE) =&gt; {
+  const fileChunkList = []
+  let cur = 0
+  while (cur &lt; file.size) {
+    fileChunkList.push({ file: file.slice(cur, cur + size) })
+    cur += size
+  }
+  return fileChunkList
+}
+</code></pre>
+<h2 id="4获取文件头部数据">4.获取文件头部数据</h2>
+<pre><code>export const getFileHeader = (file: any, size=1024 * 1024) =&gt; {
+  return { file: file.slice(0, size) }
+}
+</code></pre>
+<h2 id="5计算文件hash">5.计算文件hash</h2>
+<pre><code>// 生成文件 hash（web-worker）
+export const calculateHash = (fileChunkList: any, fu: FileUpload, dom: any) =&gt; {
+  fu.status = UPLOAD_STATUS.CAL_HASH
+  fu.updateHashTime = new Date().getTime()
+  return new Promise((resolve, reject) =&gt; {
+    let worker = new Worker('js/isoWorker.js')
+    let timer = setInterval(() =&gt; {
+      // 10秒钟未更新hash进度 抛出错误
+      const curTime = new Date().getTime()
+      if (curTime - fu.updateHashTime &gt; 10000 &amp;&amp; fu.status !== UPLOAD_STATUS.FINISH_HASH) {
+        reject()
+        clearInterval(timer)
+        timer = null
+      }
+    }, 10000)
+    worker.postMessage({ fileChunkList })
+    worker.onmessage = e =&gt; {
+      const { hash, percentage } = e.data
+      dom.click() // trigger event
+      fu.hashProcess = percentage
+      fu.updateHashTime = new Date().getTime()
+      if (hash) {
+        fu.status = UPLOAD_STATUS.FINISH_HASH
+        clearInterval(timer)
+        timer = null
+        resolve({
+          hash,
+          fu,
+        })
+      }
+    }
+  })
+}
+// js/isoWorder.js
+self.importScripts(&quot;./spark-md5.min.js&quot;); // 导入脚本
+
+// 生成文件 hash
+self.onmessage = e =&gt; {
+  const { fileChunkList } = e.data;
+  const spark = new self.SparkMD5.ArrayBuffer();
+  let percentage = 0;
+  let count = 0;
+  const loadNext = index =&gt; {
+    const reader = new FileReader();
+    reader.readAsArrayBuffer(fileChunkList[index].file);
+    reader.onload = e =&gt; {
+      count++;
+      spark.append(e.target.result);
+      if (count === fileChunkList.length) {
+        self.postMessage({
+          percentage: 100,
+          hash: spark.end()
+        });
+        self.close();
+      } else {
+        percentage += 100 / fileChunkList.length;
+        self.postMessage({
+          percentage
+        });
+        // 递归计算下一个切片
+        loadNext(count);
+      }
+    };
+  };
+  loadNext(0);
+};
+
+</code></pre>
+<h2 id="6计算速度与进度">6.计算速度与进度</h2>
+<pre><code>    const config = {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 1000 * 60 * 2, // 2min
+      onUploadProgress: (p: any) =&gt; {
+        const { loaded } = p // loaded total
+        const curTime = new Date().getTime()
+        // console.log(fu.fileName)
+        const historyUploadSize = fu.curIndex * CHUNK_SIZE + loaded // 历史已上传文件大小
+        const uploadedSize = (fu.curIndex - fu.startIndex) * CHUNK_SIZE + loaded // 本次已上传文件大小
+        if (fu.loadedBuffer.length &gt;= LOADED_BUFFER_SIZE) {
+          fu.loadedBuffer.splice(0, 1)
+        }
+        fu.loadedBuffer.push({
+          time: curTime,
+          loaded: uploadedSize,
+        })
+        const blockSize = fu.loadedBuffer[fu.loadedBuffer.length - 1].loaded - fu.loadedBuffer[0].loaded
+        const blockTime = fu.loadedBuffer[fu.loadedBuffer.length - 1].time - fu.loadedBuffer[0].time
+
+        fu.speed = calculateNetworkSpeed(blockSize, blockTime)
+        fu.process = (100 * historyUploadSize) / fu.totalSize
+      },
+    }
+</code></pre>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[判断两个矩形是否相交及相关]]></title>
+        <id>https://silencetiger.github.io/gridea/post/pan-duan-liang-ge-ju-xing-shi-fou-xiang-jiao-ji-xiang-guan/</id>
+        <link href="https://silencetiger.github.io/gridea/post/pan-duan-liang-ge-ju-xing-shi-fou-xiang-jiao-ji-xiang-guan/">
+        </link>
+        <updated>2022-05-27T02:14:21.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="矩形是否相交">矩形是否相交</h2>
+<pre><code>/**
+ *
+ * @param rect1 矩形1 {x, y, w, h}
+ * @param rect2 矩形2 {x, y, w, h}
+ * 判断两个矩形是否相交
+ * 规则: 若两个矩形相交, 则两个矩形中心点的距离小于两个矩形边长和的一半
+ */
+export function isRectIntersection(rect1, rect2) {
+  let center1 = {
+    x: (rect1.x + rect1.x + rect1.w) / 2,
+    y: (rect1.y + rect1.y + rect1.h) / 2,
+  }
+  let center2 = {
+    x: (rect2.x + rect2.x + rect2.w) / 2,
+    y: (rect2.y + rect2.y + rect2.h) / 2,
+  }
+  let dx = Math.abs(center1.x - center2.x)
+  let dy = Math.abs(center1.y - center2.y)
+  return dx &lt; (rect1.w + rect2.w) / 2 &amp;&amp; dy &lt; (rect1.h + rect2.h) / 2
+}
+</code></pre>
+<h2 id="判断两个dom元素是否相交">判断两个dom元素是否相交</h2>
+<pre><code>/**
+ *
+ * @param dom1
+ * @param dom2
+ * 判断两个dom是否相交
+ */
+export function isDomIntersection(dom1, dom2) {
+  if (!(dom1 &amp;&amp; dom2)) return false
+  const rect1 = getRectByDom(dom1)
+  const rect2 = getRectByDom(dom2)
+  return isRectIntersection(rect1, rect2)
+}
+
+export function getRectByDom(dom) {
+  return {
+    x: getNumInPx(dom.style.left),
+    y: getNumInPx(dom.style.top),
+    w: dom.clientWidth,
+    h: dom.clientHeight,
+  }
+}
+
+export function getNumInPx(str) {
+  if (str.includes('px')) {
+    return parseFloat(str.substring(0, str.length - 2))
+  } else {
+    return parseFloat(str || '0')
+  }
+}
+</code></pre>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[React Hooks中使用debounce]]></title>
+        <id>https://silencetiger.github.io/gridea/post/hooks-debounce/</id>
+        <link href="https://silencetiger.github.io/gridea/post/hooks-debounce/">
+        </link>
+        <updated>2022-05-27T02:11:09.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="使用场景">使用场景</h2>
+<ul>
+<li>依赖频繁触发，但只想执行一次</li>
+</ul>
+<h2 id="方式">方式</h2>
+<pre><code>useLayoutEffect(()=&gt;{
+    const fn = () =&gt; {
+        console.log('do something')
+    }
+    const debounceFn = debounce(fn, 100)
+    debounceFn()
+    return () =&gt; {
+        debounceFn.cancel()
+    }
+},[dep1, dep2, dep3])
+</code></pre>
+<h2 id="注意事项">注意事项</h2>
+<p>需要在卸载的时候进行<code>cancel</code></p>
+]]></content>
+    </entry>
+</feed>

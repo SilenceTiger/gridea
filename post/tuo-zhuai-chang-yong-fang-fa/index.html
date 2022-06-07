@@ -1,0 +1,289 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>拖拽常用方法 | Silence Tiger</title>
+<link rel="shortcut icon" href="https://silencetiger.github.io/gridea/favicon.ico?v=1654580269588">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://silencetiger.github.io/gridea/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="拖拽常用方法 | Silence Tiger - Atom Feed" href="https://silencetiger.github.io/gridea/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="当前元素相对容器元素的偏移
+/**
+ *
+ * @param element 当前元素
+ * @param containerElement？ 容器元素 未填相对于body
+ *
+ * 返回 当前元素相对容器元素的偏移
+ * return ..." />
+    <meta name="keywords" content="" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.5.1/build/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://silencetiger.github.io/gridea">
+  <img class="avatar" src="https://silencetiger.github.io/gridea/images/avatar.png?v=1654580269588" alt="">
+  </a>
+  <h1 class="site-title">
+    Silence Tiger
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/gridea/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/gridea/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              拖拽常用方法
+            </h2>
+            <div class="post-info">
+              <span>
+                2022-05-27
+              </span>
+              <span>
+                3 min read
+              </span>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content" v-pre>
+                <h2 id="当前元素相对容器元素的偏移">当前元素相对容器元素的偏移</h2>
+<pre><code>/**
+ *
+ * @param element 当前元素
+ * @param containerElement？ 容器元素 未填相对于body
+ *
+ * 返回 当前元素相对容器元素的偏移
+ * return {
+ * 		left: xx,
+ * 		top: xx
+ * }
+ */
+export const getOffset = (element, containerElement) =&gt; {
+  let position = {
+    left: 0,
+    top: 0,
+  }
+  if (typeof containerElement === 'string') {
+    containerElement = document.getElementById(containerElement)
+  }
+  containerElement = containerElement || document.body
+  while (element &amp;&amp; element !== containerElement) {
+    position.left += element.offsetLeft
+    position.top += element.offsetTop
+    element = element.offsetParent
+  }
+  return position
+}
+</code></pre>
+<h2 id="事件发生时-鼠标是否在容器中">事件发生时, 鼠标是否在容器中</h2>
+<pre><code>/**
+ *
+ * @param e 事件
+ * @param containerElement 容器元素 
+ *
+ * 返回 事件发生时, 鼠标是否在容器中
+ * return boolean
+ */
+export const isMouseInclude = (e, containerElement) =&gt; {
+  if (!containerElement) return
+  if (typeof containerElement === 'string') {
+    containerElement = document.querySelector(containerElement)
+  }
+  let offset = getOffset(containerElement)
+  let { pageX, pageY } = e
+  // pageX += scrollX
+  // pageY += scrollY
+  const { top: y1, left: x1 } = offset
+  const x2 = x1 + containerElement.offsetWidth
+  const y2 = y1 + containerElement.offsetHeight
+  return pageX &gt; x1 &amp;&amp; pageX &lt; x2 &amp;&amp; pageY &gt; y1 &amp;&amp; pageY &lt; y2
+}
+</code></pre>
+<h2 id="事件发生时-鼠标在容器内的坐标">事件发生时, 鼠标在容器内的坐标</h2>
+<pre><code>/**
+ *
+ * @param e 事件
+ * @param containerElement 容器元素
+ *
+ * 返回 事件发生时, 鼠标在容器内的坐标
+ * return {
+ * 		left: xx,
+ * 		top: xx
+ * }
+ */
+export const getPositionInContainer = (e, containerElement) =&gt; {
+  if (typeof containerElement === 'string') {
+    containerElement = document.querySelector(containerElement)
+  }
+  let offset = getOffset(containerElement)
+  let x = 'pageX',
+    y = 'pageY'
+  /**
+    是否考虑滚动条
+    x = 'clientX'
+    y = 'clientY'
+  */
+  return {
+    left: e[x] - offset.left,
+    top: e[y] - offset.top,
+  }
+}
+</code></pre>
+<h2 id="平移">平移</h2>
+<ul>
+<li>mouseDown记录鼠标相对于元素的相对位置<code>shiftX</code>、<code>shiftY</code></li>
+<li>mouseMove的时候通过<code>shiftX</code>、<code>shiftY</code>修正<code>left</code>、<code>top</code></li>
+</ul>
+<pre><code>  let moveTarget = {};
+  const mouseDown = (e) =&gt; {
+    if (!editing) return
+    let targetNode = e.currentTarget.parentNode
+    targetNode.style.zIndex = 999
+    moveTarget.dom = targetNode
+    moveTarget.shiftX = e.clientX - targetNode.getBoundingClientRect().left
+    moveTarget.shiftY = e.clientY - targetNode.getBoundingClientRect().top
+    e.stopPropagation()
+  }
+
+ const mouseMove = (e) =&gt; {
+     if (moveTarget.dom) {
+        const position = getPositionInContainer(e, '.container')
+        moveTarget.dom.style.left = `${position.left - moveTarget.shiftX}px`
+        moveTarget.dom.style.top = `${position.top - moveTarget.shiftY}px`
+     }
+ }
+
+ const mouseUp = (e) =&gt; {
+     if (moveTarget.dom) {
+         moveTarget = {}
+         // update react or vue 中的数据
+     }
+ }
+</code></pre>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E5%BD%93%E5%89%8D%E5%85%83%E7%B4%A0%E7%9B%B8%E5%AF%B9%E5%AE%B9%E5%99%A8%E5%85%83%E7%B4%A0%E7%9A%84%E5%81%8F%E7%A7%BB">当前元素相对容器元素的偏移</a></li>
+<li><a href="#%E4%BA%8B%E4%BB%B6%E5%8F%91%E7%94%9F%E6%97%B6-%E9%BC%A0%E6%A0%87%E6%98%AF%E5%90%A6%E5%9C%A8%E5%AE%B9%E5%99%A8%E4%B8%AD">事件发生时, 鼠标是否在容器中</a></li>
+<li><a href="#%E4%BA%8B%E4%BB%B6%E5%8F%91%E7%94%9F%E6%97%B6-%E9%BC%A0%E6%A0%87%E5%9C%A8%E5%AE%B9%E5%99%A8%E5%86%85%E7%9A%84%E5%9D%90%E6%A0%87">事件发生时, 鼠标在容器内的坐标</a></li>
+<li><a href="#%E5%B9%B3%E7%A7%BB">平移</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://silencetiger.github.io/gridea/post/big-file-upload/">
+              <h3 class="post-title">
+                大文件上传记录
+              </h3>
+            </a>
+          </div>
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://silencetiger.github.io/gridea/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>

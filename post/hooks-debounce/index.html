@@ -1,0 +1,193 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>React Hooks中使用debounce | Silence Tiger</title>
+<link rel="shortcut icon" href="https://silencetiger.github.io/gridea/favicon.ico?v=1654580269588">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://silencetiger.github.io/gridea/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="React Hooks中使用debounce | Silence Tiger - Atom Feed" href="https://silencetiger.github.io/gridea/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="使用场景
+
+依赖频繁触发，但只想执行一次
+
+方式
+useLayoutEffect(()=&gt;{
+    const fn = () =&gt; {
+        console.log('do something')
+    }
+  ..." />
+    <meta name="keywords" content="前端小技巧,react" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.5.1/build/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://silencetiger.github.io/gridea">
+  <img class="avatar" src="https://silencetiger.github.io/gridea/images/avatar.png?v=1654580269588" alt="">
+  </a>
+  <h1 class="site-title">
+    Silence Tiger
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/gridea/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/gridea/tags" class="menu">
+          标签
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              React Hooks中使用debounce
+            </h2>
+            <div class="post-info">
+              <span>
+                2022-05-27
+              </span>
+              <span>
+                1 min read
+              </span>
+              
+                <a href="https://silencetiger.github.io/gridea/tag/pJ3AIhAm9/" class="post-tag">
+                  # 前端小技巧
+                </a>
+              
+                <a href="https://silencetiger.github.io/gridea/tag/Jvi5PIlCr/" class="post-tag">
+                  # react
+                </a>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content" v-pre>
+                <h2 id="使用场景">使用场景</h2>
+<ul>
+<li>依赖频繁触发，但只想执行一次</li>
+</ul>
+<h2 id="方式">方式</h2>
+<pre><code>useLayoutEffect(()=&gt;{
+    const fn = () =&gt; {
+        console.log('do something')
+    }
+    const debounceFn = debounce(fn, 100)
+    debounceFn()
+    return () =&gt; {
+        debounceFn.cancel()
+    }
+},[dep1, dep2, dep3])
+</code></pre>
+<h2 id="注意事项">注意事项</h2>
+<p>需要在卸载的时候进行<code>cancel</code></p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF">使用场景</a></li>
+<li><a href="#%E6%96%B9%E5%BC%8F">方式</a></li>
+<li><a href="#%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9">注意事项</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://silencetiger.github.io/gridea/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>
